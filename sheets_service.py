@@ -84,26 +84,33 @@ class SheetsService:
         Args:
             customer_data: Dictionary with customer data
 
-        Sheet columns mapping:
-        A: Customer ID
+        Sheet columns mapping (Actual Sheet Structure):
+        A: Stripe Customer ID
         B: Company Name
-        C: Email
-        D: Subscription ID
-        E: Status
-        F: Amount
-        G: Currency
-        H: Timestamp
+        C: Contact Name
+        D: Contact Email
+        E: Subscription Status
+        F: Plan Tier
+        G: Setup Completed
+        H: Last Updated
+        I: Currency
+        J: Country
         """
         try:
+            # Extract contact name from email (before @)
+            contact_name = customer_data.get('email', '').split('@')[0] if customer_data.get('email') else ''
+
             new_row = [
-                customer_data['customer_id'],      # Column A
-                customer_data['company_name'],     # Column B
-                customer_data['email'],            # Column C
-                customer_data['subscription_id'],  # Column D
-                customer_data['status'],           # Column E
-                customer_data['amount'],           # Column F
-                customer_data['currency'],         # Column G
-                customer_data['timestamp']         # Column H
+                customer_data['customer_id'],      # Column A: Stripe Customer ID
+                customer_data['company_name'],     # Column B: Company Name
+                contact_name,                      # Column C: Contact Name (extracted from email)
+                customer_data['email'],            # Column D: Contact Email
+                customer_data['status'],           # Column E: Subscription Status
+                f"${customer_data['amount']:.2f}", # Column F: Plan Tier (formatted as price)
+                'FALSE',                           # Column G: Setup Completed (default FALSE)
+                customer_data['timestamp'],        # Column H: Last Updated
+                customer_data['currency'],         # Column I: Currency
+                ''                                 # Column J: Country (empty for now)
             ]
 
             self.worksheet.append_row(new_row)
