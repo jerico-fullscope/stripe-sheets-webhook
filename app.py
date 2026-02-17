@@ -108,6 +108,7 @@ def handle_checkout_completed(session):
 
     customer = stripe.Customer.retrieve(customer_id)
     company_name = customer.metadata.get('company_name', 'Unknown Company')
+    country = customer.metadata.get('country', '')  # Get country from metadata
     subscription_id = session.get('subscription')
 
     customer_data = {
@@ -118,7 +119,8 @@ def handle_checkout_completed(session):
         'status': 'Active',
         'amount': session.get('amount_total', 0) / 100,
         'currency': session.get('currency', 'usd').upper(),
-        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+        'country': country
     }
 
     result = sheets_service.upsert_customer(customer_data)
@@ -135,6 +137,7 @@ def handle_subscription_event(subscription, status):
 
     customer = stripe.Customer.retrieve(customer_id)
     company_name = customer.metadata.get('company_name', 'Unknown Company')
+    country = customer.metadata.get('country', '')  # Get country from metadata
 
     # Get plan amount if available
     amount = 0
@@ -153,7 +156,8 @@ def handle_subscription_event(subscription, status):
         'status': status,
         'amount': amount,
         'currency': currency,
-        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+        'country': country
     }
 
     result = sheets_service.upsert_customer(customer_data)
@@ -170,6 +174,7 @@ def handle_invoice_event(invoice, status):
 
     customer = stripe.Customer.retrieve(customer_id)
     company_name = customer.metadata.get('company_name', 'Unknown Company')
+    country = customer.metadata.get('country', '')  # Get country from metadata
     subscription_id = invoice.get('subscription')
 
     customer_data = {
@@ -180,7 +185,8 @@ def handle_invoice_event(invoice, status):
         'status': status,
         'amount': invoice.get('amount_paid', 0) / 100,
         'currency': invoice.get('currency', 'usd').upper(),
-        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        'timestamp': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+        'country': country
     }
 
     result = sheets_service.upsert_customer(customer_data)

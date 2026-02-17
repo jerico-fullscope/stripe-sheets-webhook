@@ -77,6 +77,33 @@ class SheetsService:
             print(f"Error updating customer: {e}")
             raise
 
+    def get_plan_tier(self, amount):
+        """
+        Map subscription amount to plan tier name
+
+        Args:
+            amount: Subscription amount in dollars
+
+        Returns:
+            Formatted plan tier string like "Standard ($499)"
+        """
+        # Round to nearest dollar for comparison
+        amount_rounded = round(amount)
+
+        tier_mapping = {
+            499: "Standard",
+            799: "Priority",
+            999: "Elite"
+        }
+
+        tier_name = tier_mapping.get(amount_rounded, "Custom")
+
+        # Format as "Tier Name ($amount)"
+        if tier_name == "Custom":
+            return f"Custom (${amount_rounded})"
+        else:
+            return f"{tier_name} (${amount_rounded})"
+
     def append_new_customer(self, customer_data):
         """
         Append new customer row with all data points
@@ -100,17 +127,20 @@ class SheetsService:
             # Extract contact name from email (before @)
             contact_name = customer_data.get('email', '').split('@')[0] if customer_data.get('email') else ''
 
+            # Get formatted plan tier
+            plan_tier = self.get_plan_tier(customer_data['amount'])
+
             new_row = [
                 customer_data['customer_id'],      # Column A: Stripe Customer ID
                 customer_data['company_name'],     # Column B: Company Name
                 contact_name,                      # Column C: Contact Name (extracted from email)
                 customer_data['email'],            # Column D: Contact Email
                 customer_data['status'],           # Column E: Subscription Status
-                f"${customer_data['amount']:.2f}", # Column F: Plan Tier (formatted as price)
+                plan_tier,                         # Column F: Plan Tier (e.g., "Standard ($499)")
                 'FALSE',                           # Column G: Setup Completed (default FALSE)
                 customer_data['timestamp'],        # Column H: Last Updated
                 customer_data['currency'],         # Column I: Currency
-                ''                                 # Column J: Country (empty for now)
+                customer_data.get('country', '')   # Column J: Country (from Stripe metadata or empty)
             ]
 
             self.worksheet.append_row(new_row)
